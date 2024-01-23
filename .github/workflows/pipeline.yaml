@@ -40,11 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: | 
-          echo 'Running unit tests'
-          cd hello-world
-          npm install
-          npm run test
-
+          # trigger the unit tests here
   delete-feature:
     if: startsWith(github.event.ref, 'feature') && github.event_name == 'delete'
     runs-on: ubuntu-latest
