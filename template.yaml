@@ -11,12 +11,30 @@ Globals:
     Timeout: 60
 
 Resources:
+  MySecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'My Lambda Security Group'
+      VpcId: 'vpc-0f2d892245909790f'
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp: '0.0.0.0/0'  # Adjust this as needed
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: hello-world/
       Handler: app.lambdaHandler
       Runtime: nodejs20.x
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref MySecurityGroup
+        SubnetIds:
+          - subnet-03a10f990cab5541d
+          - subnet-0d0a8173833bd26aa
+          - subnet-00017b0474f6e2790
+          - subnet-0532641b428766bd1
+          - subnet-08b2db1922de65aa7
+          - subnet-0d70d46d6ef8c5f83
       Architectures:
         - x86_64
       Events:
