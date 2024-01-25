@@ -30,7 +30,7 @@ async function connectToFriendlyDB(friendlyName) {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: friendlyName,
+    database: process.env.DB_DATABASE,
   };
   return await mysql.createConnection(config);
 }

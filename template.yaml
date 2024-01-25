@@ -19,12 +19,22 @@ Resources:
       SecurityGroupIngress:
         - IpProtocol: -1
           CidrIp: '0.0.0.0/0'  # Adjust this as needed
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
+      FunctionUrlConfig:
+        AuthType: NONE
       CodeUri: hello-world/
       Handler: app.lambdaHandler
       Runtime: nodejs20.x
+      Environment:
+        Variables:
+          DB_DATABASE: 'cience_core'
+          DB_HOST: 'goengg-prod-mysql-db.cs2lpqytqhm0.us-east-1.rds.amazonaws.com'
+          DB_PASSWORD: 'ASfCak4x3VgGLzQYDuEq7c'
+          DB_USER: 'lambda_user'
+          SENTRY_DSN: 'https://dacbd09ac79bc553aeed548fa7776e81@o4506083906224128.ingest.sentry.io/4506477033619456'
       VpcConfig:
         SecurityGroupIds:
           - !Ref MySecurityGroup
