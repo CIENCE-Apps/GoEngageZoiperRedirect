@@ -32,6 +32,8 @@ async function connectToFriendlyDB(friendlyName) {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
   };
+  
+  console.log("Connecting to DB with config");
   return await mysql.createConnection(config);
 }
 
@@ -47,6 +49,7 @@ async function connectToRDS() {
 
 // Function to execute query
 async function executeQuery(connection, phone) {
+  
   // SQL query to find leads based on phone or mobile number
   const query = `
       SELECT l.id, l.company_phone, l.mobile, l.phone, l.firstname, l.lastname, l.company
@@ -58,8 +61,10 @@ async function executeQuery(connection, phone) {
   // Parameters for the query, using the provided phone number
   const queryParams = [`%${phone}%`, `%${phone}%`, `%${phone}%`];
   // Execute the query
+  console.log("Executing query");
   const [rows] = await connection.execute(query, queryParams);
-  
+  console.log("Query executed");
+  console.log(rows.length);
   // Check if any rows are returned from the query
   if (rows.length === 0) {
     // No matches found
@@ -97,12 +102,16 @@ export const lambdaHandler = sentry.AWSLambda.wrapHandler(async (event) => {
     // const connectionToRDS = await connectToRDS();
     const connection = await connectToFriendlyDB(friendlyName);
     const {id: contactId, isMultiple, company} = await executeQuery(connection, phone);
+    
     if (!contactId) {
       return {
         statusCode: 404,
-        response: {status: 'The caller was not found'}
+        headers: {'Content-Type': 'application/json'},
+        isBase64Encoded: false,
+        body: {status: 'The caller was not found'}
       }
     }
+    
     let redirectUrl;
     if (isMultiple) {
       redirectUrl = `${theBaseURL}/s/companies?search=${company}`;
@@ -112,9 +121,12 @@ export const lambdaHandler = sentry.AWSLambda.wrapHandler(async (event) => {
       redirectUrl = `${theBaseURL}/s/contacts/view/${contactId}`;
     }
     
+    console.log("Redirecting to " + redirectUrl);
     return {
       statusCode: 302,
-      headers: {Location: redirectUrl},
+      headers: {"Location": redirectUrl},
+      isBase64Encoded: false,
+      body: ""
     };
   } catch (error) {
     console.error(`Error processing request: ${error.message}`);
