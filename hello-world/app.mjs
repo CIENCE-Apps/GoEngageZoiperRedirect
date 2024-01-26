@@ -30,7 +30,7 @@ async function connectToFriendlyDB(friendlyName) {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
+    database: friendlyName,
   };
   
   console.log("Connecting to DB with config");
@@ -106,7 +106,7 @@ export const lambdaHandler = sentry.AWSLambda.wrapHandler(async (event) => {
     if (!contactId) {
       return {
         statusCode: 404,
-        headers: {'Content-Type': 'application/json'},
+        headers: {"Content-Type": 'application/json'},
         isBase64Encoded: false,
         body: {status: 'The caller was not found'}
       }
