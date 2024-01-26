@@ -26,11 +26,14 @@ sentry.AWSLambda.init({
 
 // Function to connect to RDS
 async function connectToFriendlyDB(friendlyName) {
+  // Replace hyphens with underscores in the friendlyName
+  const sanitizedFriendlyName = friendlyName.replace(/-/g, '_');
+  
   const config = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: friendlyName,
+    database: sanitizedFriendlyName,
   };
   
   console.log("Connecting to DB with config");
