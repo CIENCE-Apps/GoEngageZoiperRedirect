@@ -37,6 +37,7 @@ async function connectToFriendlyDB(friendlyName) {
   };
   
   console.log("Connecting to DB with config");
+  // console.log({config});
   return await mysql.createConnection(config);
 }
 
@@ -53,8 +54,7 @@ async function connectToRDS() {
 // Function to execute query
 async function executeQuery(connection, phone) {
   // Remove the + sign if it exists in the phone number
-  const sanitizedPhone = phone.replace(/\+/g, '');
-  
+  const sanitizedPhone = phone.replace(/\+/g, '\\+');
   // SQL query to find leads based on phone or mobile number
   const query = `
       SELECT
@@ -76,6 +76,9 @@ async function executeQuery(connection, phone) {
   
   // Execute the query
   console.log("Executing query");
+  console.log("the query -> ", query);
+  console.log("the params -> ", queryParams);
+  
   const [rows] = await connection.execute(query, queryParams);
   console.log("Query executed");
   console.log(rows.length);
@@ -115,8 +118,30 @@ async function executeQuery(connection, phone) {
 export const lambdaHandler = sentry.AWSLambda.wrapHandler(async (event) => {
   try {
     console.log("Change deployed with SAM Accelerate")
+    let params = event.queryStringParameters;
+    if (!params) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": 'application/json' },
+        body: JSON.stringify({ error: 'Missing query parameters' })
+      };
+    }
     
-    const {phone, friendlyName} = event.queryStringParameters;
+    // const { phone, friendlyName } = params;
+    let phone = params.phone;
+    const friendlyName = params.friendlyName;
+    // Check if phone and friendlyName are provided
+    if (!phone || !friendlyName) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": 'application/json' },
+        body: JSON.stringify({ error: 'phone and friendlyName parameters are required' })
+      };
+    }
+    // Add the snippet here
+    if (phone.startsWith(' ')) {
+      phone = phone.replace(/^ /, '+');
+    }
     
     let theBaseURL = `https://${friendlyName}.engage.cience.com`;
     
@@ -127,10 +152,10 @@ export const lambdaHandler = sentry.AWSLambda.wrapHandler(async (event) => {
     if (!contactId) {
       return {
         statusCode: 404,
-        headers: {"Content-Type": 'application/json'},
+        headers: { "Content-Type": 'application/json' },
         isBase64Encoded: false,
-        body: {status: 'The caller was not found'}
-      }
+        body: JSON.stringify({ status: 'The caller was not found' })
+      };
     }
     
     let redirectUrl;
@@ -145,7 +170,7 @@ export const lambdaHandler = sentry.AWSLambda.wrapHandler(async (event) => {
     console.log("Redirecting to " + redirectUrl);
     return {
       statusCode: 302,
-      headers: {"Location": redirectUrl},
+      headers: { "Location": redirectUrl, 'Content-Type': 'application/json' },
       isBase64Encoded: false,
       body: ""
     };
@@ -153,8 +178,8 @@ export const lambdaHandler = sentry.AWSLambda.wrapHandler(async (event) => {
     console.error(`Error processing request: ${error.message}`);
     return {
       statusCode: 500,
-      body: JSON.stringify({error: error.message}),
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: error.message })
     };
   }
 })
