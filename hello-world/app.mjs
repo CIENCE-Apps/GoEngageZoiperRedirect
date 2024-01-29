@@ -76,12 +76,12 @@ async function executeQuery(connection, phone) {
   
   // Execute the query
   console.log("Executing query");
-  console.log("the query -> ", query);
-  console.log("the params -> ", queryParams);
+  // console.log("the query -> ", query);
+  // console.log("the params -> ", queryParams);
   
   const [rows] = await connection.execute(query, queryParams);
   console.log("Query executed");
-  console.log(rows.length);
+  // console.log(rows.length);
   
   // Check if any rows are returned from the query
   if (rows.length === 0) {
