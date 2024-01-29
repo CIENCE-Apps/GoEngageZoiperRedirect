@@ -52,18 +52,21 @@ async function connectToRDS() {
 
 // Function to execute query
 async function executeQuery(connection, phone) {
-  // Escaping the + sign if it exists in the phone number
-  const sanitizedPhone = phone.replace(/\+/g, '\\+');
+  // Remove the + sign if it exists in the phone number
+  const sanitizedPhone = phone.replace(/\+/g, '');
   
   // SQL query to find leads based on phone or mobile number
   const query = `
-      SELECT l.id, l.company_phone, l.mobile, l.phone, l.firstname, l.lastname, l.company,
-             CASE
-               WHEN l.phone LIKE ? OR l.mobile LIKE ? THEN 'personal'
-               WHEN l.company_phone LIKE ? THEN 'company'
-             END as phone_type
-      FROM leads AS l
-      WHERE l.phone LIKE ?
+      SELECT
+          l.id, l.company_phone, l.mobile, l.phone, l.firstname, l.lastname, l.company,
+          CASE
+              WHEN l.phone LIKE ? OR l.mobile LIKE ? THEN 'personal'
+              WHEN l.company_phone LIKE ? THEN 'company'
+              END as phone_type
+      FROM
+          leads AS l
+      WHERE
+          l.phone LIKE ?
          OR l.mobile LIKE ?
          OR l.company_phone LIKE ?
   `;
