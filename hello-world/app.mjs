@@ -52,32 +52,47 @@ async function connectToRDS() {
 
 // Function to execute query
 async function executeQuery(connection, phone) {
+  // Escaping the + sign if it exists in the phone number
+  const sanitizedPhone = phone.replace(/\+/g, '\\+');
   
   // SQL query to find leads based on phone or mobile number
   const query = `
-      SELECT l.id, l.company_phone, l.mobile, l.phone, l.firstname, l.lastname, l.company
+      SELECT l.id, l.company_phone, l.mobile, l.phone, l.firstname, l.lastname, l.company,
+             CASE
+               WHEN l.phone LIKE ? OR l.mobile LIKE ? THEN 'personal'
+               WHEN l.company_phone LIKE ? THEN 'company'
+             END as phone_type
       FROM leads AS l
       WHERE l.phone LIKE ?
          OR l.mobile LIKE ?
          OR l.company_phone LIKE ?
   `;
-  // Parameters for the query, using the provided phone number
-  const queryParams = [`%${phone}%`, `%${phone}%`, `%${phone}%`];
+  
+  // Parameters for the query, using the sanitized phone number
+  const queryParams = [`%${sanitizedPhone}%`, `%${sanitizedPhone}%`, `%${sanitizedPhone}%`, `%${sanitizedPhone}%`, `%${sanitizedPhone}%`, `%${sanitizedPhone}%`];
+  
   // Execute the query
   console.log("Executing query");
   const [rows] = await connection.execute(query, queryParams);
   console.log("Query executed");
   console.log(rows.length);
+  
   // Check if any rows are returned from the query
   if (rows.length === 0) {
     // No matches found
-    return {id: null, isMultiple: false};
+    return { id: null, isMultiple: false };
   } else {
-    // At least one match found
-    // Determine if there are multiple matches
+    // Matches found
+    const firstRow = rows[0];
     const isMultiple = rows.length > 1;
-    // Return the ID of the first row and the multiple match status
-    return {id: rows[0].id, isMultiple, company: isMultiple ? rows[0].company : null};
+    
+    if (firstRow.phone_type === 'personal') {
+      // If phone is found in mobile or phone, return single row
+      return { id: firstRow.id, isMultiple: isMultiple };
+    } else {
+      // If phone is found in company_phone, return company
+      return { id: firstRow.id, isMultiple: isMultiple, company: firstRow.company };
+    }
   }
 }
 
